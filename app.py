@@ -20,7 +20,7 @@ with st.form("diagnostic_form"):
 
 def decode_vin_free(vin):
     if len(vin) != 17: return None
-    url = f"https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/{vin}?format=json"
+    url = f"https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/{vin.strip()}?format=json"
     try:
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
@@ -35,7 +35,8 @@ def decode_vin_free(vin):
 
 if submit_button:
     if "GEMINI_API_KEY" in st.secrets:
-        api_key = st.secrets["GEMINI_API_KEY"]
+        # Explicitly strip any accidental hidden spaces or line breaks from the secret token
+        api_key = str(st.secrets["GEMINI_API_KEY"]).strip().replace(" ", "")
     else:
         st.error("Missing API Key configuration in settings.")
         st.stop()
@@ -49,17 +50,18 @@ if submit_button:
         prompt = f"""
         You are an expert master automotive diagnostic assistant. Analyze this shop repair order:
         VEHICLE: {year} {make} {model} {engine}
-        VIN: {target_vin}
-        ACTIVE DTCS: {active_dtcs}
-        CUSTOMER SYMPTOMS: {symptoms}
-        TECHNICIAN SCOPE/LIVE NOTES: {tech_notes}
+        VIN: {target_vin.strip()}
+        ACTIVE DTCS: {active_dtcs.strip()}
+        CUSTOMER SYMPTOMS: {symptoms.strip()}
+        TECHNICIAN SCOPE/LIVE NOTES: {tech_notes.strip()}
         
         Provide a professional electrical testing strategy. Focus on sensor circuit verification, pinout isolation targets, and step-by-step voltage drop or scope measurement thresholds.
         """
         
-        # Explicitly append key parameter avoiding string literal conflicts
+        # Route key string explicitly using clean param dictionary to eliminate token mismatch errors
         url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-        params = {"key": api_key}
+        clean_key = api_key.strip()
+        params = {"key": clean_key}
         headers = {"Content-Type": "application/json"}
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         
