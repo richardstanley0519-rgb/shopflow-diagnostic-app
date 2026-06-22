@@ -57,19 +57,14 @@ if submit_button:
         Provide a professional electrical testing strategy. Focus on sensor circuit verification, pinout isolation targets, and step-by-step voltage drop or scope measurement thresholds.
         """
         
-        # Append api_key directly as a URL parameter to force validation as an API Key string rather than an Access Token
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-        headers = {
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "contents": [{
-                "parts": [{"text": prompt}]
-            }]
-        }
+        # Explicitly append key parameter avoiding string literal conflicts
+        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+        params = {"key": api_key}
+        headers = {"Content-Type": "application/json"}
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
         
         try:
-            res = requests.post(url, headers=headers, json=payload, timeout=30)
+            res = requests.post(url, headers=headers, params=params, json=payload, timeout=30)
             if res.status_code == 200:
                 res_json = res.json()
                 text_output = res_json["candidates"][0]["content"]["parts"][0]["text"]
