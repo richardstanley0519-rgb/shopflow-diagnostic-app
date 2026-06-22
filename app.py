@@ -57,11 +57,10 @@ if submit_button:
         Provide a professional electrical testing strategy. Focus on sensor circuit verification, pinout isolation targets, and step-by-step voltage drop or scope measurement thresholds.
         """
         
-        # Direct REST API call to support new AQ. keys natively
-        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+        # Append api_key directly as a URL parameter to force validation as an API Key string rather than an Access Token
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
         headers = {
-            "Content-Type": "application/json",
-            "x-goog-api-key": api_key
+            "Content-Type": "application/json"
         }
         payload = {
             "contents": [{
