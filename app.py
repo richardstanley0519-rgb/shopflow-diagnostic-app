@@ -1,8 +1,7 @@
 import streamlit as st
 import os
 import requests
-import sqlite3
-import google.generativeai as genai
+import json
 
 # Page Configuration for Mobile Viewports
 st.set_page_config(page_title="ShopFlow AI", page_icon="⚡", layout="centered")
@@ -47,9 +46,6 @@ if submit_button:
         
         st.success(f"🚗 IDENTIFIED: {year} {make} {model} ({engine}L)")
         
-        genai.configure(api_key=api_key)
-        model_engine = genai.GenerativeModel('gemini-1.5-flash')
-        
         prompt = f"""
         You are an expert master automotive diagnostic assistant. Analyze this shop repair order:
         VEHICLE: {year} {make} {model} {engine}
@@ -61,9 +57,26 @@ if submit_button:
         Provide a professional electrical testing strategy. Focus on sensor circuit verification, pinout isolation targets, and step-by-step voltage drop or scope measurement thresholds.
         """
         
+        # Direct REST API call to support new AQ. keys natively
+        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key
+        }
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }]
+        }
+        
         try:
-            response = model_engine.generate_content(prompt)
-            st.subheader("⚡ TARGETED CIRCUIT ANALYSIS & DIAGNOSTIC TREE")
-            st.write(response.text)
+            res = requests.post(url, headers=headers, json=payload, timeout=30)
+            if res.status_code == 200:
+                res_json = res.json()
+                text_output = res_json["candidates"][0]["content"]["parts"][0]["text"]
+                st.subheader("⚡ TARGETED CIRCUIT ANALYSIS & DIAGNOSTIC TREE")
+                st.write(text_output)
+            else:
+                st.error(f"Brain Sync Error (HTTP {res.status_code}): {res.text}")
         except Exception as e:
-            st.error(f"Brain Sync Error: {e}")
+            st.error(f"Network Error: {e}")
